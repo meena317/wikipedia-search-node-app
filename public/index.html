@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Signup / Login</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width:600px; margin:30px auto; }
+    form { border:1px solid #ddd; padding:20px; border-radius:8px; }
+    input { width:100%; padding:8px; margin:8px 0; }
+    button { padding:10px 16px; }
+    .toggle { margin-bottom:10px; }
+    .msg { color: red; margin:8px 0; }
+  </style>
+</head>
+<body>
+  <h2>Welcome — Signup or Login</h2>
+  <div class="toggle">
+    <button id="showSignup">Signup</button>
+    <button id="showLogin">Login</button>
+    <a href="/search.html" style="float:right">Go to Search (requires login)</a>
+  </div>
+
+  <div id="signupForm" style="display:none;">
+    <h3>Signup</h3>
+    <form id="formSignup">
+      <input name="name" placeholder="Name" required />
+      <input name="email" placeholder="Email" type="email" required />
+      <input name="password" placeholder="Password" type="password" required />
+      <button type="submit">Sign up</button>
+    </form>
+    <div id="signupMsg" class="msg"></div>
+  </div>
+
+  <div id="loginForm" style="display:none;">
+    <h3>Login</h3>
+    <form id="formLogin">
+      <input name="email" placeholder="Email" type="email" required />
+      <input name="password" placeholder="Password" type="password" required />
+      <button type="submit">Log in</button>
+    </form>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+
+  <script>
+    const showSignup = document.getElementById('showSignup');
+    const showLogin = document.getElementById('showLogin');
+    const signupForm = document.getElementById('signupForm');
+    const loginForm = document.getElementById('loginForm');
+
+    showSignup.onclick = () => { signupForm.style.display='block'; loginForm.style.display='none'; };
+    showLogin.onclick = () => { signupForm.style.display='none'; loginForm.style.display='block'; };
+
+    // default show signup
+    showSignup.click();
+
+    // Signup submit
+    document.getElementById('formSignup').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        name: form.name.value.trim(),
+        email: form.email.value.trim(),
+        password: form.password.value
+      };
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', json.token);
+        window.location = '/search.html';
+      } else {
+        document.getElementById('signupMsg').textContent = json.message || 'Error';
+      }
+    });
+
+    // Login submit
+    document.getElementById('formLogin').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = {
+        email: form.email.value.trim(),
+        password: form.password.value
+      };
+      const res = await fetch('/api/auth/login', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+      const json = await res.json();
+      if (res.ok) {
+        localStorage.setItem('token', json.token);
+        window.location = '/search.html';
+      } else {
+        document.getElementById('loginMsg').textContent = json.message || 'Error';
+      }
+    });
+  </script>
+</body>
+</html>

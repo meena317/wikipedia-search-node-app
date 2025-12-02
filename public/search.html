@@ -1,0 +1,79 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Search Word</title>
+  <style>
+    body { font-family: Arial, sans-serif; max-width:700px; margin:30px auto; }
+    .top { display:flex; justify-content:space-between; align-items:center; }
+    input { padding:8px; width:70%; }
+    button { padding:9px; }
+    .result { margin-top:20px; padding:14px; border-radius:8px; border:1px solid #ddd; }
+    .ok { color: green; font-weight: bold; }
+    .no { color: red; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h2>Search a Word</h2>
+    <div>
+      <button id="logoutBtn">Logout</button>
+      <a href="/">Back</a>
+    </div>
+  </div>
+
+  <div>
+    <input id="wordInput" placeholder="Enter word to search (e.g., Apple)" />
+    <button id="searchBtn">Search</button>
+  </div>
+
+  <div id="resultArea"></div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first');
+      window.location = '/';
+    }
+
+    document.getElementById('logoutBtn').addEventListener('click', () => {
+      localStorage.removeItem('token');
+      window.location = '/';
+    });
+
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const word = document.getElementById('wordInput').value.trim();
+      if (!word) return alert('Enter a word');
+
+      const res = await fetch('/api/search', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify({ word })
+      });
+
+      const json = await res.json();
+      const area = document.getElementById('resultArea');
+      area.innerHTML = '';
+      if (!res.ok) {
+        area.innerHTML = `<div class="result no">Error: ${json.message || 'Server error'}</div>`;
+        return;
+      }
+
+      const lines = [];
+      lines.push(`<div class="result">`);
+      lines.push(`<div><strong>Word:</strong> ${word}</div>`);
+      lines.push(`<div><strong>Saved to DB:</strong> ${json.saved ? 'Yes' : 'Already existed'}</div>`);
+      if (json.existsOnWikipedia) {
+        lines.push(`<div class="ok">&#10004; Found on Wikipedia — <a href="${json.wikipediaUrl}" target="_blank">Open page</a></div>`);
+      } else {
+        lines.push(`<div class="no">&#10060; Not found on Wikipedia</div>`);
+      }
+      lines.push(`</div>`);
+      area.innerHTML = lines.join('');
+    });
+  </script>
+</body>
+</html>
